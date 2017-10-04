@@ -53,7 +53,7 @@ class MyDbgHook(DBG_Hooks):
 
 
 # main
-pattern = FindBinary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? 5E 5B C3");
+pattern = FindBinary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? ?? 5B C3");
 addr = get_ret(pattern)
 
 print "Event Constructor addr : 0x%x" % addr
