@@ -40,7 +40,7 @@ class MyDbgHook(DBG_Hooks):
             except:
                 pass
             
-            print "func addr : 0x%x name : %s - EDX = 0x%x" % ( func_addr , func_name , GetRegValue("EDX") )
+            print "func addr : 0x%x name : %s" % ( func_addr , func_name )
             idaapi.continue_process()
         if (ea == EP):
             idaapi.continue_process()       
@@ -78,7 +78,7 @@ if addr > 0:
         EP = GetLongPrm(INF_START_IP)
         idc.AddBpt(EP)
         
-        print "Monitor point at 0x%x " % EP
+        print "Entry point at 0x%x " % EP
          
         request_run_to(EP)
               
