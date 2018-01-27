@@ -5,22 +5,24 @@ from idautils import *
 
 addr = 0
 EP = 0
+info = idaapi.get_inf_structure()
 
 def get_ret(addr):
-  out = addr
-  count = 0
-  while True:
-    # check for ret 
-    if Byte(out) != 0xc3: 
-        out += 1
-        count +=1
-    else:
-        break    
-    if count > 100:    
-        out = -1
-        break
-    out += 1    
-  return out
+    out = addr
+    count = 0
+    while True:
+        # check for ret 
+        if Byte(out) == 0xc3:
+            return out
+        else:
+            out += 1
+            count +=1  
+            continue
+        if count > 30:    
+            out = -1
+            break
+        out += 1 
+    return out
   
 class MyDbgHook(DBG_Hooks):
 
@@ -31,8 +33,15 @@ class MyDbgHook(DBG_Hooks):
         if (ea == addr):
             RefreshDebuggerMemory()
             func_name = ""
-            func_name = idc.GetString(GetRegValue("EDX")+1 , Byte(GetRegValue("EDX")), STRTYPE_C)
-            func_addr = GetRegValue("EAX")
+            func_addr = 0
+            if (info.is_64bit()):
+                func_name = idc.GetString(GetRegValue("RDI") , int(GetRegValue("RDI")-4), strtype=idaapi.ASCSTR_UNICODE)
+                func_addr = GetRegValue("RAX")
+            elif (info.is_32bit()):
+                func_name = idc.GetString(GetRegValue("EDX")+1 , Byte(GetRegValue("EDX")), STRTYPE_C)
+                func_addr = GetRegValue("EAX")
+            else:
+                print 'Not Supported !'
             # add it to the BP list
             idc.AddBpt(func_addr)
             try:
@@ -53,7 +62,16 @@ class MyDbgHook(DBG_Hooks):
 
 
 # main
-pattern = FindBinary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? ?? 5B C3");
+
+if (info.is_64bit()):
+    pattern = FindBinary(0, SEARCH_DOWN, "80 ?? ?? 00 74 ?? E8 ?? ?? ?? ?? 48 8B ?? ?? 48 8D ?? ?? ?? ?? ?? ?? C3");
+elif (info.is_32bit()):
+    pattern = FindBinary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? ?? 5B C3");
+else:
+    print 'Not Supported !'
+    pattern = 0
+
+print "pattern addr : 0x%x" % pattern
 addr = get_ret(pattern)
 
 print "Event Constructor addr : 0x%x" % addr

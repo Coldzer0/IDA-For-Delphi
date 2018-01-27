@@ -2,6 +2,12 @@
 
 ## IDA Python Script to Get All function names from Event Constructor 
 
+# New Update
+## Now it supports <b>x64</b>
+
+<img src="images/DE_x64.png">
+
+<br><br>
 ### + at first IDA didn't recognise it as Delphi file
 
 <img src="images/DE_1.png">
