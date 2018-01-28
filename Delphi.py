@@ -45,7 +45,9 @@ class MyDbgHook(DBG_Hooks):
             # add it to the BP list
             idc.AddBpt(func_addr)
             try:
-                idc.MakeName(func_addr, "_DE_"+func_name)
+                idc.MakeCode(func_addr) # Mark as Code if not ..
+                idc.MakeFunction(func_addr) # Mark as Function if not ..
+                idc.MakeNameEx(func_addr, "_DE_"+func_name, idc.SN_NOWARN)
             except:
                 pass
             
