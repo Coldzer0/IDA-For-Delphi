@@ -38,7 +38,7 @@ class MyDbgHook(DBG_Hooks):
                 func_name = idc.GetString(GetRegValue("RDI") , int(GetRegValue("RDI")-4), strtype=idaapi.ASCSTR_UNICODE)
                 func_addr = GetRegValue("RAX")
             elif (info.is_32bit()):
-                func_name = idc.GetString(GetRegValue("EDX")+1 , Byte(GetRegValue("EDX")), STRTYPE_C)
+                func_name = idc.GetString(GetRegValue("EDX")+1 , Byte(GetRegValue("EDX")), ASCSTR_C)
                 func_addr = GetRegValue("EAX")
             else:
                 print 'Not Supported !'
