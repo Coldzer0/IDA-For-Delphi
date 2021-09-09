@@ -1,7 +1,7 @@
-from idc      import *
-from idaapi   import *
-from idautils import *
-
+import idc
+import idaapi
+import idautils
+import collections
 
 addr = 0
 EP = 0
@@ -11,8 +11,8 @@ def get_ret(addr):
     out = addr
     count = 0
     while True:
-        # check for ret 
-        if Byte(out) == 0xc3:
+        # check for return 
+        if get_byte(out) == 0xc3:
             return out
         else:
             out += 1
@@ -31,57 +31,57 @@ class MyDbgHook(DBG_Hooks):
         global Monitor
         
         if (ea == addr):
-            RefreshDebuggerMemory()
+            ida_dbg.refresh_debugger_memory	()
             func_name = ""
             func_addr = 0
             if (info.is_64bit()):
-                func_name = idc.GetString(GetRegValue("RDI") , int(GetRegValue("RDI")-4), strtype=idaapi.ASCSTR_UNICODE)
-                func_addr = GetRegValue("RAX")
+                func_name = idc.get_strlit_contents(idc.get_reg_value("RDI") , int(idc.get_reg_value("RDI")-4), strtype=ida_nalt.STRTYPE_C_16)
+                func_addr = idc.get_reg_value("RAX")
             elif (info.is_32bit()):
-                func_name = idc.GetString(GetRegValue("EDX")+1 , Byte(GetRegValue("EDX")), ASCSTR_C)
-                func_addr = GetRegValue("EAX")
+                func_name = idc.get_strlit_contents(idc.get_reg_value("EDX")+1 , get_byte(idc.get_reg_value("EDX")), ida_nalt.STRTYPE_C)
+                func_addr = idc.get_reg_value("EAX")
             else:
-                print 'Not Supported !'
+                print('Not Supported !')
             # add it to the BP list
-            idc.AddBpt(func_addr)
+            idc.add_bpt(func_addr)
             try:
-                idc.MakeCode(func_addr) # Mark as Code if not ..
-                idc.MakeFunction(func_addr) # Mark as Function if not ..
-                idc.MakeNameEx(func_addr, "_DE_"+func_name, idc.SN_NOWARN)
+                idc.create_insn(func_addr) # Mark as Code if not ..
+                ida_funcs.add_func(func_addr) # Mark as Function if not ..
+                idc.set_name(func_addr, "_DE_"+func_name, idc.SN_NOWARN)
             except:
                 pass
             
-            print "func addr : 0x%x name : %s" % ( func_addr , func_name )
+            print("func addr : 0x%x name : %s" % ( func_addr , func_name ))
             idaapi.continue_process()
         if (ea == EP):
             idaapi.continue_process()       
         return 0
     
     def dbg_process_exit(self, pid, tid, ea, code):
-        print("Process exited pid=%d tid=%d ea=0x%x code=%d" % (pid,
-            tid, ea, code))
+        print(("Process exited pid=%d tid=%d ea=0x%x code=%d" % (pid,
+            tid, ea, code)))
 
 
 
 # main
 
 if (info.is_64bit()):
-    pattern = FindBinary(0, SEARCH_DOWN, "80 ?? ?? 00 74 ?? E8 ?? ?? ?? ?? 48 8B ?? ?? 48 8D ?? ?? ?? ?? ?? ?? C3");
+    pattern = idc.find_binary(0, SEARCH_DOWN, "80 ?? ?? 00 74 ?? E8 ?? ?? ?? ?? 48 8B ?? ?? 48 8D ?? ?? ?? ?? ?? ?? C3");
 elif (info.is_32bit()):
-    pattern = FindBinary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? ?? 5B C3");
+    pattern = idc.find_binary(0, SEARCH_DOWN, "80 E3 DF 75 ?? 49 75 ?? 8B 46 02 ?? ?? 5B C3");
 else:
-    print 'Not Supported !'
+    print('Not Supported !')
     pattern = 0
 
-print "pattern addr : 0x%x" % pattern
+print("pattern addr : 0x%x" % pattern)
 addr = get_ret(pattern)
 
-print "Event Constructor addr : 0x%x" % addr
+print("Event Constructor addr : 0x%x" % addr)
 if addr > 0:
 
-    idc.AddBpt(addr);
-    if idc.CheckBpt(addr) >= 0:
-        print "BP add at %x" % addr
+    idc.add_bpt(addr);
+    if ida_dbg.check_bpt(addr) >= 0:
+        print("BP add at %x" % addr)
         # set the Dbg hook      
         try:
             if debughook:
@@ -95,15 +95,14 @@ if addr > 0:
         debughook.hook()
         print("Add new debughook ...")
         
-        EP = GetLongPrm(INF_START_IP)
-        idc.AddBpt(EP)
+        EP = idc.get_inf_attr(INF_START_IP)
+        ida_dbg.add_bpt(EP)
         
-        print "Entry point at 0x%x " % EP
+        print("Entry point at 0x%x " % EP)
          
-        request_run_to(EP)
+        idaapi.run_to(EP)
               
         # Start debugging
         run_requests()   
 else:
-    print "The Pattern not found"
-
+    print("The Pattern not found")
